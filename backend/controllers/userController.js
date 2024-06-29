@@ -13,9 +13,10 @@ const createUser = asyncHandler(async(req, res) => {
     if (userExists) res.status(400).send("User already exists");      //unique email to ensure no user can have multiple accounts with same email.
 
 
-    
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = new User({username, email, password});
+    const newUser = new User({username, email, password: hashedPassword});
 
     try{
         await newUser.save();    //mongoose command that allows us to store new users in the database.
