@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useLoginMutation } from "../../redux/api/usersApiSlice";
 import { setCredentials } from "../../redux/features/auth/authSlice";
 import { toast } from "react-toastify";
-
+import Loader from "../../components/Loader";
 
 
 const Login = () => {
@@ -14,20 +14,32 @@ const Login = () => {
 
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
-	
-	const [login, {isLoading}] = useLoginMutation();
 
-	const {userInfo} = useSelector(state => state.auth);
+	const [login, { isLoading }] = useLoginMutation();
 
-	const {search} = useLocation();
+	const { userInfo } = useSelector(state => state.auth);
+
+	const { search } = useLocation();
 	const sp = new URLSearchParams(search);
 	const redirect = sp.get('redirect') || '/';
-	
+
 	useEffect(() => {
-		if(userInfo) {
+		if (userInfo) {
 			navigate(redirect);
 		}
 	}, [navigate, redirect, userInfo]);
+
+	const submitHandler = async (e) => {
+		e.preventDefault();
+
+		try {
+			const res = await login({ email, password }).unwrap();
+			console.log(res);
+			dispatch(setCredentials({ ...res }));
+		} catch (error) {
+			toast.error(error?.data?.message || error.message);
+		}
+	};
 
 	return (
 		<div>
@@ -36,15 +48,15 @@ const Login = () => {
 					<h1 className="text-2xl font-semibold mb-4">
 						Sign in
 					</h1>
-					<form className="container w-[40rem]">
+					<form onSubmit={submitHandler} className="container w-[40rem]">
 						<div className="my-[2rem]">
 							<label htmlFor="email" className="block text-sm 
 							font-medium text-black">
 								Email Address
 							</label>
 							<input type="email" id="email" className="mt-1 p-2
-							border rounded w-full" value={email} 
-							onChange={(e) => setEmail(e.target.value)} />
+							border rounded w-full" value={email}
+								onChange={(e) => setEmail(e.target.value)} />
 						</div>
 						<div className="my-[2rem]">
 							<label htmlFor="password" className="block text-sm 
@@ -52,8 +64,8 @@ const Login = () => {
 								Password
 							</label>
 							<input type="password" id="password" className="mt-1 p-2
-							border rounded w-full" value={password} 
-							onChange={(e) => setPassword(e.target.value)} />
+							border rounded w-full" value={password}
+								onChange={(e) => setPassword(e.target.value)} />
 						</div>
 
 						<button disabled={isLoading} type="submit" className="px-4
@@ -61,7 +73,18 @@ const Login = () => {
 						my-[1rem]">
 							{isLoading ? "Signing In..." : "Sign In"}
 						</button>
+
+						{isLoading && <Loader />}
 					</form>
+					<div className="mt-4">
+						<p className="text-black">
+							New customer ? {" "}
+							<Link to={redirect ? `/register?redirect=${redirect}`
+								: '/register'} className="text-pink-500 hover:underline">
+								Register
+							</Link>
+						</p>
+					</div>
 				</div>
 			</section>
 		</div>
